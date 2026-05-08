@@ -1,0 +1,50 @@
+services:
+
+  fake-serial:
+    image: alpine/socat
+    command: "-d -d pty,raw,echo=0,link=/tmp/ttyS1 pty,raw,echo=0,link=/tmp/ttyS2"
+    volumes:
+      - serial-vol:/tmp
+      - /dev/pts:/dev/pts 
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "test", "-e", "/tmp/ttyS1"]
+      interval: 2s
+      timeout: 5s
+      retries: 10
+  
+  mosquitto:
+    image: eclipse-mosquitto:2.1.2-alpine
+    ports:
+      - "1883:1883"
+    volumes:
+      - ./mosquitto/config/mosquitto.conf:/mosquitto/config/mosquitto.conf
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "1883"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  qr-c:
+    pid: "service:fake-serial"
+    environment:
+      SERIAL_PORT: /tmp/ttyS1
+    volumes:
+      - serial-vol:/tmp
+      - /dev/pts:/dev/pts 
+    depends_on:
+      fake-serial:
+        condition: service_healthy
+  
+  gateway-py:
+    environment:
+      MQTT_HOST: mosquitto
+      MQTT_PORT: 1883
+      MQTT_CERT: ""
+    depends_on:
+      mosquitto:
+        condition: service_healthy
+
+volumes:
+  serial-vol:

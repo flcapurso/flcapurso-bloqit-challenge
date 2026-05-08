@@ -1,0 +1,41 @@
+services:
+
+  qr-c:
+    build:
+      context: ./qr-c
+      dockerfile: Dockerfile
+    environment:
+      SOCKET_PATH: /run/qr/qr_socket.sock
+    volumes:
+      - socket-vol:/run/qr
+      - logs-vol:/app/logs
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "test", "-S", "/run/qr/qr_socket.sock"]
+      interval: 2s
+      timeout: 5s
+      retries: 10
+
+  gateway-py:
+    stdin_open: true # docker run -i
+    tty: true        # docker run -t
+    build:
+      context: ./gateway-py
+      dockerfile: Dockerfile
+    environment:
+      MQTT_HOST: test.mosquitto.org
+      MQTT_PORT: 8883
+      MQTT_TOPIC_CMD: from_cloud/command
+      MQTT_TOPIC_EVENT: from_device/events
+      SOCKET_PATH: /run/qr/qr_socket.sock
+    volumes:
+      - socket-vol:/run/qr
+      - logs-vol:/app/logs
+    depends_on:
+      qr-c:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  socket-vol:
+  logs-vol:

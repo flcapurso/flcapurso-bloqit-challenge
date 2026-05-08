@@ -1,6 +1,27 @@
 # QR Code Gateway — Embedded Challenge
-
 A containerised system that reads QR codes from a serial port and forwards them to the cloud via MQTT. The system is split into two services: a C++ serial reader (`qr-c`) and a Python MQTT gateway (`gateway-py`).
+## Table of Contents
+
+- [Architecture](#architecture)
+- [Repository Structure](#repository-structure)
+- [Prerequisites](#prerequisites)
+- [How to Run](#how-to-run)
+  - [Development (mocked serial + local MQTT broker)](#development-mocked-serial--local-mqtt-broker)
+  - [Production (real serial device + remote MQTT broker)](#production-real-serial-device--remote-mqtt-broker)
+  - [Stopping](#stopping)
+  - [Modifying virtual environment variables](#modifying-virtual-environment-variables)
+- [How to Test - Development mode](#how-to-test---development-mode)
+  - [1 — Send a command from the cloud](#1--send-a-command-from-the-cloud)
+  - [2 — Simulate a QR code scan](#2--simulate-a-qr-code-scan)
+  - [3 — Monitor events from the device](#3--monitor-events-from-the-device)
+- [How to Test - Production mode](#how-to-test---production-mode)
+- [Assumptions](#assumptions)
+- [Missing Functionality](#missing-functionality)
+- [Untested Functionality](#untested-functionality)
+- [Design Decisions](#design-decisions)
+- [Future Improvements](#future-improvements)
+- [A comment on use of AI (LLMs)](#a-comment-on-use-of-ai-llms)
+
 
 ---
 
@@ -52,7 +73,7 @@ A containerised system that reads QR codes from a serial port and forwards them 
 ## Prerequisites
 
 - Docker and Docker Compose
-- make
+- make (only for Linux)
 
 ---
 
@@ -160,7 +181,7 @@ mosquitto_sub -h localhost -p 1883 \
   -t "from_device/events"
 ```
 
-## How to test - Production mode
+## How to Test - Production mode
 Run the following command to download the certificate in the gateway-py container:
 ```bash
 docker compose exec gateway-py sh -c wget https://test.mosquitto.org/ssl/mosquitto.org.crt

@@ -29,9 +29,18 @@ A containerised system that reads QR codes from a serial port and forwards them 
 
 ![Docker Architecture](./diagrams/diagram.png)
 
+**Main Docker Containers:**
 - **qr-c**: Opens a serial port, listens for commands from `gateway-py` over a Unix socket, and responds with JSON-encoded QR data.
 - **gateway-py**: Connects to an MQTT broker, translates cloud commands into socket commands for `qr-c`, and publishes QR events back to the cloud.
-- **Communication**: Unix socket for local IPC, MQTT over TLS for cloud communication.
+
+**Helper Docker Containers (for development & testing):** 
+- **fake-serial** (socat): generates two connected PTY devices (virtual). Serial data can be be mocked by sending to one of them, which is then forwarded to the other.
+- **mosquitto** (mosquitto): runs and exposes an MQTT broker, which automatically handles client connections and forwarding of published messages to subscribers.
+
+**Communication**:
+  - Serial comminication with real or PTY devices
+  - Unix socket for local IPC
+  - MQTT over TLS for cloud communication.
 
 ---
 
